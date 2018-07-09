@@ -6,6 +6,7 @@
         "*.tcc": "cpp",
         "fstream": "cpp",
         "string_view": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "xutility": "cpp"
     }
 }
