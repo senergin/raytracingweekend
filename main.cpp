@@ -2,7 +2,8 @@
 
 #include "camera.h"
 #include "hitableList.h"
-#include "myRandom.h"
+#include "lambertian.h"
+#include "metal.h"
 #include "sphere.h"
 #include "stb_image_write.h"
 #include <cstdint>
@@ -15,49 +16,63 @@ vec3 backgroundColor(const ray& r)
     float t2 = 0.5f + (0.5f * unit.y);
     return t1 * vec3(1.f, 1.f, 1.f) + t2 * vec3(0.5f, 0.7f, 1.f);
 }
-vec3 color(const ray& r, const hitable* world, const float minDistance, const float maxDistance)
+vec3 color(const ray& r, const hitable* world, const float minDistance, const float maxDistance,
+           const unsigned int depth, const unsigned int maxDepth)
 {
     hitRecord rec;
     bool isHit = world->hit(r, minDistance, maxDistance, rec);
     if (isHit) {
-        return 0.5f * (rec.normal + 1);
+        ray scattered;
+        vec3 attenuation;
+        if (depth < maxDepth && rec.mat->scatter(r, rec, attenuation, scattered)) {
+            return attenuation *
+                   color(scattered, world, minDistance, maxDistance, depth + 1, maxDepth);
+        }
+        return vec3(0.f, 0.f, 0.f);
     }
     return backgroundColor(r);
 }
 int main()
 {
-    myRandom random;
-    float x = random.next();
+    float x = myRandom::next();
 
-    const int width = 400;
-    const int height = 200;
-    const int sampling = 100;
-    const float minDistance = 0.f;
+    const unsigned int width = 400;
+    const unsigned int height = 200;
+    const unsigned int sampling = 100;
+    const unsigned int maxDepth = 40;
+    const float minDistance = 0.001f;
     const float maxDistance = 10000.f;
     // Output image data
     const int channels = 4; // STBI_rgb_alpha
     unsigned char* data = new unsigned char[width * height * channels];
 
-    hitable* list[2];
-    list[0] = new sphere(vec3(0, 0, -1), 0.5f);
-    list[1] = new sphere(vec3(0, -100.5f, -1), 100);
-    hitable* world = new hitableList(list, 2);
+    hitable* list[4];
+    list[0] = new sphere(vec3(0, 0, -1), 0.5f, new lambertian(vec3(0.8f, 0.3f, 0.3f)));
+    list[1] = new sphere(vec3(0, -100.5f, -1), 100, new lambertian(vec3(0.8f, 0.8f, 0.f)));
+    list[2] = new sphere(vec3(1, -0, -1), 0.5f, new metal(vec3(0.8f, 0.6f, 0.2f), 0.3f));
+    list[3] = new sphere(vec3(-1, 0, -1), 0.4f, new metal(vec3(0.8f, 0.8f, 0.8f), 1.0f));
+    hitable* world = new hitableList(list, 4);
     camera cam;
-    for (int j = 0; j < height; ++j) {
-        for (int i = 0; i < width; ++i) {
-            vec3 col;
-            for (int s = 0; s < sampling; ++s) {
-                float u = float(i + random.next()) / float(width);
-                float v = float(j + random.next()) / float(height);
+    for (unsigned int j = 0; j < height; ++j) {
+        for (unsigned int i = 0; i < width; ++i) {
+            vec3 col(0.f, 0.f, 0.f);
+            for (unsigned int s = 0; s < sampling; ++s) {
+                float u = float(i + myRandom::next()) / float(width);
+                float v = float(j + myRandom::next()) / float(height);
                 ray r = cam.getRay(u, v);
-                col += color(r, world, minDistance, maxDistance);
+                col += color(r, world, minDistance, maxDistance, /* depth */ 0, maxDepth);
             }
             col /= sampling;
+            // Gamma correction
+            float r = std::sqrt(col.x) * 255.99f;
+            float g = std::sqrt(col.y) * 255.99f;
+            float b = std::sqrt(col.z) * 255.99f;
 
             int index = ((j * width) + i) * channels;
-            data[index + 0] = (unsigned char)(col.x * 255.99f);
-            data[index + 1] = (unsigned char)(col.y * 255.99f);
-            data[index + 2] = (unsigned char)(col.z * 255.99f);
+
+            data[index + 0] = (unsigned char)(r);
+            data[index + 1] = (unsigned char)(g);
+            data[index + 2] = (unsigned char)(b);
             data[index + 3] = (unsigned char)255;
         }
     }
@@ -70,6 +85,8 @@ int main()
     delete world;
     delete list[0];
     delete list[1];
+    delete list[2];
+    delete list[3];
 
     return 0;
 }

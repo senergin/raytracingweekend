@@ -7,7 +7,8 @@ class sphere : public hitable
 {
   public:
     sphere(){};
-    sphere(vec3 center, float radius) : center(center), radius(radius){};
+    ~sphere() { delete mat; };
+    sphere(vec3 center, float radius, material* mat) : center(center), radius(radius), mat(mat){};
     virtual bool hit(const ray& r, float tMin, float tMax, hitRecord& rec) const
     {
         vec3 oc = r.origin - center;
@@ -21,6 +22,7 @@ class sphere : public hitable
                 rec.distance = temp;
                 rec.point = r.getPoint(rec.distance);
                 rec.normal = (rec.point - center) / radius;
+                rec.mat = mat;
                 return true;
             }
             temp = (-b + sqrt(b * b - a * c) / a);
@@ -28,6 +30,7 @@ class sphere : public hitable
                 rec.distance = temp;
                 rec.point = r.getPoint(rec.distance);
                 rec.normal = (rec.point - center) / radius;
+                rec.mat = mat;
                 return true;
             }
         }
@@ -36,6 +39,7 @@ class sphere : public hitable
 
     vec3 center;
     float radius;
+    material* mat;
 };
 
 #endif
