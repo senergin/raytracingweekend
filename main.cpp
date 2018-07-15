@@ -1,11 +1,8 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include "camera.h"
-#include "dielectric.h"
-#include "hitableList.h"
-#include "lambertian.h"
-#include "metal.h"
-#include "sphere.h"
+#include "hitable.h"
+#include "materials.h"
 #include "stb_image_write.h"
 #include <cstdint>
 #include <iostream>
