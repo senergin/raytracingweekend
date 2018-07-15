@@ -1,6 +1,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include "camera.h"
+#include "dielectric.h"
 #include "hitableList.h"
 #include "lambertian.h"
 #include "metal.h"
@@ -36,9 +37,9 @@ int main()
 {
     float x = myRandom::next();
 
-    const unsigned int width = 400;
-    const unsigned int height = 200;
-    const unsigned int sampling = 100;
+    const unsigned int width = 960;
+    const unsigned int height = 540;
+    const unsigned int sampling = 20;
     const unsigned int maxDepth = 40;
     const float minDistance = 0.001f;
     const float maxDistance = 10000.f;
@@ -46,12 +47,13 @@ int main()
     const int channels = 4; // STBI_rgb_alpha
     unsigned char* data = new unsigned char[width * height * channels];
 
-    hitable* list[4];
-    list[0] = new sphere(vec3(0, 0, -1), 0.5f, new lambertian(vec3(0.8f, 0.3f, 0.3f)));
+    hitable* list[5];
+    list[0] = new sphere(vec3(0, 0, -1), 0.5f, new lambertian(vec3(0.1f, 0.2f, 0.5f)));
     list[1] = new sphere(vec3(0, -100.5f, -1), 100, new lambertian(vec3(0.8f, 0.8f, 0.f)));
-    list[2] = new sphere(vec3(1, -0, -1), 0.5f, new metal(vec3(0.8f, 0.6f, 0.2f), 0.3f));
-    list[3] = new sphere(vec3(-1, 0, -1), 0.4f, new metal(vec3(0.8f, 0.8f, 0.8f), 1.0f));
-    hitable* world = new hitableList(list, 4);
+    list[2] = new sphere(vec3(1, -0, -1), 0.5f, new metal(vec3(0.8f, 0.6f, 0.2f), 0.1));
+    list[3] = new sphere(vec3(-1, 0, -1), 0.5f, new dielectric(vec3(1.f, 1.f, 1.f), 1.5f));
+    list[4] = new sphere(vec3(-1, 0, -1), -0.45f, new dielectric(vec3(1.f, 1.f, 1.f), 1.5f));
+    hitable* world = new hitableList(list, 5);
     camera cam;
     for (unsigned int j = 0; j < height; ++j) {
         for (unsigned int i = 0; i < width; ++i) {
@@ -64,9 +66,9 @@ int main()
             }
             col /= sampling;
             // Gamma correction
-            float r = std::sqrt(col.x) * 255.99f;
-            float g = std::sqrt(col.y) * 255.99f;
-            float b = std::sqrt(col.z) * 255.99f;
+            int r = std::sqrt(col.x) * 255.99f;
+            int g = std::sqrt(col.y) * 255.99f;
+            int b = std::sqrt(col.z) * 255.99f;
 
             int index = ((j * width) + i) * channels;
 
@@ -87,6 +89,7 @@ int main()
     delete list[1];
     delete list[2];
     delete list[3];
+    delete list[4];
 
     return 0;
 }
