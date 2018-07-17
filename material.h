@@ -23,7 +23,7 @@ class material
         float dt = vec3::dot(uv, normal);
         float discriminant = 1.0f - ((niOverPoint * niOverPoint) * (1 - dt * dt));
         if (discriminant > 0) {
-            refracted = niOverPoint * (uv - normal * dt) - normal * std::sqrt(discriminant);
+            refracted = niOverPoint * (uv - normal * dt) - normal * sqrtf(discriminant);
             return true;
         }
         return false;
@@ -32,7 +32,7 @@ class material
     {
         float r0 = (1 - refIdx) / (1 + refIdx);
         r0 = r0 * r0;
-        return r0 + (1 - r0) * std::pow((1 - cosine), 5);
+        return r0 + (1 - r0) * pow((1 - cosine), 5);
     }
 };
 

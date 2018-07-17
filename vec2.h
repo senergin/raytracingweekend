@@ -2,8 +2,8 @@
 #define VEC2_H
 
 #include "mathx.h"
+#include <cmath>
 #include <iostream>
-#include <math.h>
 
 class vec2
 {
@@ -72,7 +72,7 @@ class vec2
         return os << "(" << v.x << ", " << v.y << ")";
     }
 
-    inline float length() const { return std::sqrt(x * x + y * y); }
+    inline float length() const { return sqrtf(x * x + y * y); }
     inline float squaredLength() const { return x * x + y * y; }
     inline vec2 normalized() const
     {
@@ -88,7 +88,7 @@ class vec2
 
     static float angle(const vec2& from, const vec2& to)
     {
-        return std::acoshf(dot(from, to) / (from.length() * to.length())) * mathx::rad2deg;
+        return acoshf(dot(from, to) / (from.length() * to.length())) * mathx::rad2deg;
     }
     static float cross(const vec2& v1, const vec2& v2) { return v1.x * v2.y - v1.y * v2.x; }
     static float distance(const vec2& v1, const vec2& v2) { return (v1 - v2).length(); }

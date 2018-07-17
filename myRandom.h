@@ -2,7 +2,7 @@
 #define MYRANDOM_H
 
 #include "mathx.h"
-#include <math.h>
+#include "vec3.h"
 #include <random>
 
 class myRandom
@@ -17,18 +17,16 @@ class myRandom
         float costheta = nextCostheta();
         float volume = next();
 
-        float theta = std::acos(costheta);
-        float r = std::cbrtf(volume);
-        return r * vec3(std::sin(theta) * std::cos(phi), std::sin(theta) * std::sin(phi),
-                        std::cos(theta));
+        float theta = acos(costheta);
+        float r = cbrtf(volume);
+        return r * vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
     };
-    static vec3 nextInUnitSphere_rand()
+    static vec3 nextInUnitDiskXY()
     {
-        vec3 p;
-        do {
-            p = 2 * vec3(next(), next(), next()) - vec3(1.f, 1.f, 1.f);
-        } while (p.squaredLength() >= 1.0f);
-        return p;
+        float phi = nextPhi();
+        float area = next();
+        float r = sqrtf(area);
+        return r * vec3(cos(phi), sin(phi), 0.f);
     };
 
   private:

@@ -31,7 +31,7 @@ class sphere : public hitable
         float c = vec3::dot(oc, oc) - radius * radius;
         float discriminant = b * b - a * c;
         if (discriminant > 0) {
-            float temp = (-b - sqrt(b * b - a * c)) / a;
+            float temp = (-b - sqrtf(b * b - a * c)) / a;
             if (temp < tMax && temp > tMin) {
                 rec.distance = temp;
                 rec.point = r.getPoint(rec.distance);
@@ -39,7 +39,7 @@ class sphere : public hitable
                 rec.mat = mat;
                 return true;
             }
-            temp = (-b + sqrt(b * b - a * c) / a);
+            temp = (-b + sqrtf(b * b - a * c) / a);
             if (temp < tMax && temp > tMin) {
                 rec.distance = temp;
                 rec.point = r.getPoint(rec.distance);

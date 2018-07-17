@@ -2,8 +2,8 @@
 #define VEC3_H
 
 #include "mathx.h"
+#include <cmath>
 #include <iostream>
-#include <math.h>
 
 class vec3
 {
@@ -81,7 +81,7 @@ class vec3
         return os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
     }
 
-    inline float length() const { return std::sqrt(x * x + y * y + z * z); }
+    inline float length() const { return sqrtf(x * x + y * y + z * z); }
     inline float squaredLength() const { return x * x + y * y + z * z; }
     inline vec3 normalized() const
     {
@@ -98,7 +98,7 @@ class vec3
 
     static float angle(const vec3& from, const vec3& to)
     {
-        return std::acoshf(dot(from, to) / (from.length() * to.length())) * mathx::rad2deg;
+        return acoshf(dot(from, to) / (from.length() * to.length())) * mathx::rad2deg;
     }
     static vec3 cross(const vec3& v1, const vec3& v2)
     {

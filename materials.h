@@ -55,7 +55,7 @@ class dielectric : public material
             outwardNormal = -rec.normal;
             niOverPoint = refIdx;
             cosine = vec3::dot(incoming.direction, rec.normal) / incoming.direction.length();
-            cosine = std::sqrt(1 - refIdx * refIdx * (1 - cosine * cosine));
+            cosine = sqrtf(1 - refIdx * refIdx * (1 - cosine * cosine));
         } else {
             outwardNormal = rec.normal;
             niOverPoint = 1.0f / refIdx;

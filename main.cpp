@@ -40,12 +40,18 @@ int main()
     const unsigned int maxDepth = 40;
     const float minDistance = 0.001f;
     const float maxDistance = 10000.f;
+
     // Output image data
     const int channels = 4; // STBI_rgb_alpha
     unsigned char* data = new unsigned char[width * height * channels];
 
     // Camera
-    camera cam(vec3(-2, 2, 1), vec3(0, 0, -1), vec3(0, 1, 0), 45.f, (float)width / height);
+    vec3 lookFrom(3, 3, 2);
+    vec3 lookAt(0, 0, -1);
+    float aperture = 0.2f;
+    float distanceToFocus = (lookFrom - lookAt).length();
+    camera cam(lookFrom, lookAt, /* up */ vec3(0, 1, 0), /* fov */ 90.f, (float)width / height,
+               aperture, distanceToFocus);
 
     // Scene
     hitable* list[5];
@@ -55,11 +61,6 @@ int main()
     list[3] = new sphere(vec3(-1, 0, -1), 0.5f, new dielectric(vec3(1.f, 1.f, 1.f), 1.5f));
     list[4] = new sphere(vec3(-1, 0, -1), -0.45f, new dielectric(vec3(1.f, 1.f, 1.f), 1.5f));
     hitable* world = new hitableList(list, 5);
-    // hitable* list[2];
-    // float r = cos(mathx::pi / 4);
-    // list[0] = new sphere(vec3(-r, 0, -1), r, new lambertian(vec3(0, 0, 1)));
-    // list[1] = new sphere(vec3(r, 0, -1), r, new lambertian(vec3(1, 0, 0)));
-    // hitable* world = new hitableList(list, 2);
 
     for (unsigned int j = 0; j < height; ++j) {
         for (unsigned int i = 0; i < width; ++i) {
@@ -71,10 +72,11 @@ int main()
                 col += color(r, world, minDistance, maxDistance, /* depth */ 0, maxDepth);
             }
             col /= sampling;
+
             // Gamma correction
-            int r = std::sqrt(col.x) * 255.99f;
-            int g = std::sqrt(col.y) * 255.99f;
-            int b = std::sqrt(col.z) * 255.99f;
+            int r = sqrtf(col.x) * 255.99f;
+            int g = sqrtf(col.y) * 255.99f;
+            int b = sqrtf(col.z) * 255.99f;
 
             int index = ((j * width) + i) * channels;
 
