@@ -60,6 +60,13 @@ class hitableList : public hitable
 {
   public:
     hitableList(){};
+    ~hitableList()
+    {
+        for (unsigned int i = 0; i < count; ++i) {
+            delete list[i];
+        }
+        delete[] list;
+    };
     hitableList(hitable** list, unsigned int count) : list(list), count(count){};
     virtual bool hit(const ray& r, float tMin, float tMax, hitRecord& rec) const
     {

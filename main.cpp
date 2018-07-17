@@ -30,12 +30,48 @@ vec3 color(const ray& r, const hitable* world, const float minDistance, const fl
     }
     return backgroundColor(r);
 }
+hitable* randomScene()
+{
+    unsigned int n = 500;
+    unsigned int i = 0;
+    hitable** list = new hitable*[n + 1];
+    list[i++] = new sphere(vec3(0, -1000, 0), 1000, new lambertian(vec3(0.5, 0.5, 0.5)));
+    for (int a = -11; a < 11; a++) {
+        for (int b = -11; b < 11; b++) {
+            float chooseMat = myRandom::next();
+            vec3 center(a + 0.9 * myRandom::next(), 0.2, b + 0.9 * myRandom::next());
+            if ((center - vec3(4, 0.2, 0)).length() > 0.9) {
+                if (chooseMat < 0.8) { // diffuse
+                    list[i++] =
+                        new sphere(center, 0.2,
+                                   new lambertian(vec3(myRandom::next() * myRandom::next(),
+                                                       myRandom::next() * myRandom::next(),
+                                                       myRandom::next() * myRandom::next())));
+                } else if (chooseMat < 0.95) { // metal
+                    list[i++] = new sphere(
+                        center, 0.2,
+                        new metal(vec3(0.5 * (1 + myRandom::next()), 0.5 * (1 + myRandom::next()),
+                                       0.5 * (1 + myRandom::next())),
+                                  0.5 * myRandom::next()));
+                } else { // glass
+                    list[i++] = new sphere(center, 0.2, new dielectric(vec3(1.f, 1.f, 1.f), 1.5));
+                }
+            }
+        }
+    }
+
+    list[i++] = new sphere(vec3(0, 1, 0), 1.0, new dielectric(vec3(1.f, 1.f, 1.f), 1.5));
+    list[i++] = new sphere(vec3(-4, 1, 0), 1.0, new lambertian(vec3(0.4, 0.2, 0.1)));
+    list[i++] = new sphere(vec3(4, 1, 0), 1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0));
+
+    return new hitableList(list, i);
+}
 int main()
 {
     float x = myRandom::next();
 
-    const unsigned int width = 960;
-    const unsigned int height = 540;
+    const unsigned int width = 1000;
+    const unsigned int height = 600;
     const unsigned int sampling = 20;
     const unsigned int maxDepth = 40;
     const float minDistance = 0.001f;
@@ -46,21 +82,16 @@ int main()
     unsigned char* data = new unsigned char[width * height * channels];
 
     // Camera
-    vec3 lookFrom(3, 3, 2);
-    vec3 lookAt(0, 0, -1);
-    float aperture = 0.2f;
-    float distanceToFocus = (lookFrom - lookAt).length();
-    camera cam(lookFrom, lookAt, /* up */ vec3(0, 1, 0), /* fov */ 90.f, (float)width / height,
+    vec3 lookFrom(13, 2, 3);
+    vec3 lookAt(0, 0, 0);
+    float distanceToFocus = 10.0;
+    float aperture = 0.1;
+
+    camera cam(lookFrom, lookAt, /* up */ vec3(0, 1, 0), /* fov */ 20, (float)width / height,
                aperture, distanceToFocus);
 
     // Scene
-    hitable* list[5];
-    list[0] = new sphere(vec3(0, 0, -1), 0.5f, new lambertian(vec3(0.1f, 0.2f, 0.5f)));
-    list[1] = new sphere(vec3(0, -100.5f, -1), 100, new lambertian(vec3(0.8f, 0.8f, 0.f)));
-    list[2] = new sphere(vec3(1, -0, -1), 0.5f, new metal(vec3(0.8f, 0.6f, 0.2f), 0.1));
-    list[3] = new sphere(vec3(-1, 0, -1), 0.5f, new dielectric(vec3(1.f, 1.f, 1.f), 1.5f));
-    list[4] = new sphere(vec3(-1, 0, -1), -0.45f, new dielectric(vec3(1.f, 1.f, 1.f), 1.5f));
-    hitable* world = new hitableList(list, 5);
+    hitable* world = randomScene();
 
     for (unsigned int j = 0; j < height; ++j) {
         for (unsigned int i = 0; i < width; ++i) {
@@ -93,11 +124,6 @@ int main()
     }
 
     delete world;
-    delete list[0];
-    delete list[1];
-    delete list[2];
-    delete list[3];
-    delete list[4];
 
     return 0;
 }

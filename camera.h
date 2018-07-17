@@ -24,8 +24,9 @@ class camera
         this->right = vec3::cross(this->direction, up).normalized();
         this->up = vec3::cross(this->right, this->direction).normalized();
 
-        this->upperLeftCorner = this->origin + (-halfW * this->focusDistance * this->right) +
-                                (halfH * this->focusDistance * this->up) + this->direction;
+        this->upperLeftCorner =
+            this->origin +
+            focusDistance * ((-halfW * this->right) + (halfH * this->up) + this->direction);
         this->horizontal = 2 * halfW * this->focusDistance * right;
         this->vertical = -2 * halfH * this->focusDistance * up;
     }
