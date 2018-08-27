@@ -31,7 +31,7 @@ class camera
         this->vertical = -2 * halfH * this->focusDistance * up;
     }
 
-    ray getRay(float u, float v)
+    ray getRay(float u, float v) const
     {
         vec3 rd = lensRadius * myRandom::nextInUnitDiskXY();
         vec3 offset = right * rd.x + up * rd.y;
