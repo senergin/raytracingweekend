@@ -16,21 +16,21 @@ vec3 backgroundColor(const ray& r)
     vec3 unit = r.direction;
     float t1 = 0.5f - (0.5f * unit.y);
     float t2 = 0.5f + (0.5f * unit.y);
-    return t1 * vec3(1.f, 1.f, 1.f) + t2 * vec3(0.5f, 0.7f, 1.f);
+    return t1 * vec3(0.5f, 1.f, 1.f) + t2 * vec3(0.5f, 0.7f, 1.f);
 }
-vec3 color(const ray& r, const hitable* world, const float minDistance, const float maxDistance,
+vec3 color(const ray& r, const hitable* hitable, const float minDistance, const float maxDistance,
            const unsigned int depth, const unsigned int maxDepth)
 {
     hitRecord rec;
-    bool isHit = world->hit(r, minDistance, maxDistance, rec);
+    bool isHit = hitable->hit(r, minDistance, maxDistance, rec);
     if (isHit) {
         ray scattered;
         vec3 attenuation;
         if (depth < maxDepth && rec.mat->scatter(r, rec, attenuation, scattered)) {
             return attenuation *
-                   color(scattered, world, minDistance, maxDistance, depth + 1, maxDepth);
+                   color(scattered, hitable, minDistance, maxDistance, depth + 1, maxDepth);
         }
-        return vec3(0.f, 0.f, 0.f);
+        return vec3(0, 0, 0);
     }
     return backgroundColor(r);
 }
@@ -38,7 +38,7 @@ hitable* randomScene()
 {
     const unsigned int n = 500u;
     unsigned int i = 0;
-    hitable** list = new hitable*[n + 1];
+    hitable** list = new hitable*[n];
     list[i++] = new sphere(vec3(0, -1000, 0), 1000, new lambertian(vec3(0.5f, 0.5f, 0.5f)));
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
@@ -67,6 +67,11 @@ hitable* randomScene()
     list[i++] = new sphere(vec3(0, 1, 0), 1.0, new dielectric(vec3(1.f, 1.f, 1.f), 1.5));
     list[i++] = new sphere(vec3(-4, 1, 0), 1.0, new lambertian(vec3(0.4, 0.2, 0.1)));
     list[i++] = new sphere(vec3(4, 1, 0), 1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0));
+
+    list[i++] = new triangle(vec3(0, 1, -1), vec3(-2, 4, -1), vec3(-4, 1, -1),
+                             new metal(vec3(0.7, 0.6, 0.5), 0.0));
+    list[i++] =
+        new triangle(vec3(0, 1, 1), vec3(4, 1, 1), vec3(-2, 4, 1), new lambertian(vec3(1, 1, 0.5)));
 
     return new hitableList(list, i);
 }
@@ -128,40 +133,33 @@ void raycastWorld(const raycastWorldParameters& params, const hitable* world, co
                 params.startWidth, params.endWidth, params.startHeight, params.endHeight,
                 params.maxDepth, params.sampling, thisId, duration);
 }
-int main()
+void singlethreadRaycast(const float minDistance, const float maxDistance,
+                         const unsigned int maxDepth, const unsigned int sampling,
+                         const unsigned int width, const unsigned int height,
+                         const unsigned int channels, const hitable* world, const camera& cam,
+                         unsigned char* const data)
 {
-    const float minDistance = 0.001f;
-    const float maxDistance = 10000.f;
-    const unsigned int maxDepth = 40u;
-    const unsigned int sampling = 100u;
-
-    // Output image data
-    const unsigned int width = 1000u;
-    const unsigned int height = 600u;
-    const unsigned int channels = 4u; // STBI_rgb_alpha
-
-    // Multi-threading
-    const unsigned int threadCount = std::thread::hardware_concurrency();
-
+    const raycastWorldParameters parameters{.minDistance = minDistance,
+                                            .maxDistance = maxDistance,
+                                            .maxDepth = maxDepth,
+                                            .sampling = sampling,
+                                            .width = width,
+                                            .height = height,
+                                            .startWidth = 0,
+                                            .endWidth = width,
+                                            .startHeight = 0,
+                                            .endHeight = height,
+                                            .channels = channels};
+    raycastWorld(parameters, world, cam, data);
+}
+void multithreadRaycast(const float minDistance, const float maxDistance,
+                        const unsigned int maxDepth, const unsigned int sampling,
+                        const unsigned int width, const unsigned int height,
+                        const unsigned int channels, const hitable* world, const camera& cam,
+                        unsigned char* const data, unsigned int threadCount)
+{
     std::vector<std::thread> workers;
 
-    const unsigned int outputSize = width * height * channels;
-
-    // Camera
-    vec3 lookFrom(13, 2, 3);
-    vec3 lookAt(0, 0, 0);
-    float distanceToFocus = 10.0;
-    float aperture = 0.1;
-
-    camera cam(lookFrom, lookAt, /* up */ vec3(0, 1, 0), /* fov */ 20, (float)width / height,
-               aperture, distanceToFocus);
-
-    // Scene
-    hitable* world = randomScene();
-
-    unsigned char* const data = new unsigned char[outputSize];
-
-    auto t1 = std::chrono::high_resolution_clock::now();
     unsigned int startHeight = 0u;
     for (int i = 0; i < threadCount; i++) {
         const unsigned int startWidth = 0u;
@@ -190,6 +188,47 @@ int main()
     }
     for (int i = 0; i < threadCount; i++) {
         workers[i].join();
+    }
+}
+int main()
+{
+    const float minDistance = 0.001f;
+    const float maxDistance = 10000.f;
+    const unsigned int maxDepth = 40u;
+    const unsigned int sampling = 100u;
+
+    // Output image data
+    const unsigned int width = 1000u;
+    const unsigned int height = 600u;
+    const unsigned int channels = 4u; // STBI_rgb_alpha
+
+    // Multi-threading
+    const unsigned int threadCount = std::thread::hardware_concurrency();
+
+    const unsigned int outputSize = width * height * channels;
+
+    // Camera
+    vec3 lookFrom(13, 2, 3);
+    vec3 lookAt(0, 0, 0);
+    float distanceToFocus = 10.0;
+    float aperture = 0.1;
+
+    camera cam(lookFrom, lookAt, /* up */ vec3(0, 1, 0), /* fov */ 20, (float)width / height,
+               aperture, distanceToFocus);
+
+    // Scene
+    hitable* world = randomScene();
+
+    unsigned char* const data = new unsigned char[outputSize];
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    if (threadCount == 1) {
+        singlethreadRaycast(minDistance, maxDistance, maxDepth, sampling, width, height, channels,
+                            world, cam, data);
+    } else {
+        multithreadRaycast(minDistance, maxDistance, maxDepth, sampling, width, height, channels,
+                           world, cam, data, threadCount);
     }
 
     auto t2 = std::chrono::high_resolution_clock::now();
