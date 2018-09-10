@@ -1,9 +1,10 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include "camera.h"
+#include "external\OBJ_Loader.h"
+#include "external\stb_image_write.h"
 #include "hitable.h"
 #include "materials.h"
-#include "stb_image_write.h"
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
@@ -36,44 +37,60 @@ vec3 color(const ray& r, const hitable* hitable, const float minDistance, const 
 }
 hitable* randomScene()
 {
-    const unsigned int n = 500u;
-    unsigned int i = 0;
-    hitable** list = new hitable*[n];
-    list[i++] = new sphere(vec3(0, -1000, 0), 1000, new lambertian(vec3(0.5f, 0.5f, 0.5f)));
-    for (int a = -11; a < 11; a++) {
-        for (int b = -11; b < 11; b++) {
+    std::vector<hitable*> list;
+
+    // OBJ
+    vec3 objTranslate(0, 0, 1);
+    float objScale = 0.75;
+    objl::Loader loader;
+    bool isLoaded = loader.LoadFile("resources\\teapot.obj");
+    if (isLoaded) {
+        const auto indices = loader.LoadedIndices;
+        const auto vertices = loader.LoadedVertices;
+        for (int i = 0; i < indices.size(); i += 3) {
+            auto p1 = vertices[indices[i]].Position;
+            auto p2 = vertices[indices[i + 1]].Position;
+            auto p3 = vertices[indices[i + 2]].Position;
+            vec3 pp1 = vec3(p1.X, p1.Y, p1.Z) * objScale + objTranslate;
+            vec3 pp2 = vec3(p2.X, p2.Y, p2.Z) * objScale + objTranslate;
+            vec3 pp3 = vec3(p3.X, p3.Y, p3.Z) * objScale + objTranslate;
+            list.push_back(new triangle(pp1, pp2, pp3, new metal(vec3(0.7, 0.6, 0.5), 0.7)));
+        }
+    }
+
+    // Sphere-world
+    list.push_back(new sphere(vec3(0, -1000, 0), 1000, new lambertian(vec3(0.5f, 0.5f, 0.5f))));
+    for (int a = -22; a < 22; a++) {
+        for (int b = -22; b < 22; b++) {
             float chooseMat = myRandom::next();
             vec3 center(a + 0.9 * myRandom::next(), 0.2f, b + 0.9f * myRandom::next());
             if ((center - vec3(4, 0.2f, 0)).length() > 0.9f) {
                 if (chooseMat < 0.8f) { // diffuse
-                    list[i++] =
+                    list.push_back(
                         new sphere(center, 0.2f,
                                    new lambertian(vec3(myRandom::next() * myRandom::next(),
                                                        myRandom::next() * myRandom::next(),
-                                                       myRandom::next() * myRandom::next())));
+                                                       myRandom::next() * myRandom::next()))));
                 } else if (chooseMat < 0.95f) { // metal
-                    list[i++] = new sphere(
+                    list.push_back(new sphere(
                         center, 0.2f,
                         new metal(vec3(0.5f * (1 + myRandom::next()), 0.5f * (1 + myRandom::next()),
                                        0.5f * (1 + myRandom::next())),
-                                  0.5f * myRandom::next()));
+                                  0.5f * myRandom::next())));
                 } else { // glass
-                    list[i++] = new sphere(center, 0.2, new dielectric(vec3(1.f, 1.f, 1.f), 1.5f));
+                    list.push_back(
+                        new sphere(center, 0.2, new dielectric(vec3(1.f, 1.f, 1.f), 1.5f)));
                 }
             }
         }
     }
+    list.push_back(new sphere(vec3(-6, 1.5f, -4), 1.5f, new lambertian(vec3(0.4, 0.2, 0.1))));
+    list.push_back(new sphere(vec3(-2, 1.5f, -4), 1.5f, new dielectric(vec3(1.f, 1.f, 1.f), 1.5)));
+    list.push_back(new sphere(vec3(2, 1.5f, -4), 1.5f, new metal(vec3(0.7, 0.6, 0.5), 0.0)));
 
-    list[i++] = new sphere(vec3(0, 1, 0), 1.0, new dielectric(vec3(1.f, 1.f, 1.f), 1.5));
-    list[i++] = new sphere(vec3(-4, 1, 0), 1.0, new lambertian(vec3(0.4, 0.2, 0.1)));
-    list[i++] = new sphere(vec3(4, 1, 0), 1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0));
-
-    list[i++] = new triangle(vec3(0, 1, -1), vec3(-2, 4, -1), vec3(-4, 1, -1),
-                             new metal(vec3(0.7, 0.6, 0.5), 0.0));
-    list[i++] =
-        new triangle(vec3(0, 1, 1), vec3(4, 1, 1), vec3(-2, 4, 1), new lambertian(vec3(1, 1, 0.5)));
-
-    return new hitableList(list, i);
+    hitable** listArr = new hitable*[list.size()];
+    std::copy(list.begin(), list.end(), listArr);
+    return new hitableList(listArr, list.size());
 }
 struct raycastWorldParameters {
     const float minDistance;
@@ -92,7 +109,11 @@ void raycastWorld(const raycastWorldParameters& params, const hitable* world, co
                   unsigned char* out)
 {
     auto t1 = std::chrono::high_resolution_clock::now();
+    std::thread::id threadId = std::this_thread::get_id();
+
     for (unsigned int j = params.startHeight; j < params.endHeight; ++j) {
+        std::printf("- threadId: 0x%08x %u/%u\n", threadId, (j - params.startHeight),
+                    (params.endHeight - params.startHeight));
         for (unsigned int i = params.startWidth; i < params.endWidth; ++i) {
             vec3 col(0.f, 0.f, 0.f);
             for (unsigned int s = 0; s < params.sampling; ++s) {
@@ -119,7 +140,6 @@ void raycastWorld(const raycastWorldParameters& params, const hitable* world, co
     }
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(t2 - t1).count();
-    std::thread::id thisId = std::this_thread::get_id();
     std::printf("--------------------------\n"
                 "raycastWorld duration for:\n"
                 " startWidth: %u\n"
@@ -131,7 +151,7 @@ void raycastWorld(const raycastWorldParameters& params, const hitable* world, co
                 " threadId: 0x%08x\n"
                 "duration: %u seconds.\n",
                 params.startWidth, params.endWidth, params.startHeight, params.endHeight,
-                params.maxDepth, params.sampling, thisId, duration);
+                params.maxDepth, params.sampling, threadId, duration);
 }
 void singlethreadRaycast(const float minDistance, const float maxDistance,
                          const unsigned int maxDepth, const unsigned int sampling,
@@ -208,9 +228,10 @@ int main()
     const unsigned int outputSize = width * height * channels;
 
     // Camera
-    vec3 lookFrom(13, 2, 3);
+    // vec3 lookFrom(15, 6, 12);
+    vec3 lookFrom(26, 4, 6);
     vec3 lookAt(0, 0, 0);
-    float distanceToFocus = 10.0;
+    float distanceToFocus = 20.0;
     float aperture = 0.1;
 
     camera cam(lookFrom, lookAt, /* up */ vec3(0, 1, 0), /* fov */ 20, (float)width / height,

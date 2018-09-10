@@ -49,6 +49,7 @@
         "tuple": "cpp",
         "chrono": "cpp",
         "thread": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "deque": "cpp"
     }
 }
