@@ -7,8 +7,8 @@
 class camera
 {
   public:
-    camera(vec3 lookFrom, vec3 lookAt, vec3 up, float fov, float aspectRatio, float aperture,
-           float focusDistance)
+    camera(const vec3& lookFrom, const vec3& lookAt, const vec3& up, float fov, float aspectRatio,
+           float aperture, float focusDistance)
     {
         this->fov = fov;
         this->aspectRatio = aspectRatio;
@@ -34,7 +34,7 @@ class camera
     ray getRay(float u, float v) const
     {
         vec3 rd = lensRadius * myRandom::nextInUnitDiskXY();
-        vec3 offset = right * rd.x + up * rd.y;
+        vec3 offset = right * rd.x() + up * rd.y();
         vec3 from = origin + offset;
         vec3 to = upperLeftCorner + u * horizontal + v * vertical;
         return ray(from, to - from);

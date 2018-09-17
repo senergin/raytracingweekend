@@ -8,63 +8,79 @@
 class vec3
 {
   public:
-    vec3() : x(0.f), y(0.f), z(0.f) {}
-    vec3(float x, float y, float z) : x(x), y(y), z(z) {}
-    vec3(const vec3& v) : x(v.x), y(v.y), z(v.z) {}
+    vec3() : e{0.f, 0.f, 0.f} {}
+    vec3(float x, float y, float z) : e{x, y, z} {}
+    vec3(const vec3& v) : e{v.x(), v.y(), v.z()} {}
+
+    inline float x() const { return e[0]; }
+    inline float y() const { return e[1]; }
+    inline float z() const { return e[2]; }
 
     inline const vec3& operator+() const { return *this; }
-    inline const vec3 operator-() const { return vec3(-x, -y, -z); }
+    inline const vec3 operator-() const { return vec3(-e[0], -e[1], -e[2]); }
 
-    inline vec3 operator+(const vec3& v) const { return vec3(x + v.x, y + v.y, z + v.z); }
-    inline vec3 operator-(const vec3& v) const { return vec3(x - v.x, y - v.y, z - v.z); }
-    inline vec3 operator*(const vec3& v) const { return vec3(x * v.x, y * v.y, z * v.z); }
-    inline vec3 operator/(const vec3& v) const { return vec3(x / v.x, y / v.y, z / v.z); }
-    inline vec3 operator+(const float s) const { return vec3(x + s, y + s, z + s); }
-    inline vec3 operator-(const float s) const { return vec3(x - s, y - s, z - s); }
-    inline vec3 operator*(const float s) const { return vec3(x * s, y * s, z * s); }
-    inline vec3 operator/(const float s) const { return vec3(x / s, y / s, z / s); }
+    inline vec3 operator+(const vec3& v) const
+    {
+        return vec3(e[0] + v.x(), e[1] + v.y(), e[2] + v.z());
+    }
+    inline vec3 operator-(const vec3& v) const
+    {
+        return vec3(e[0] - v.x(), e[1] - v.y(), e[2] - v.z());
+    }
+    inline vec3 operator*(const vec3& v) const
+    {
+        return vec3(e[0] * v.x(), e[1] * v.y(), e[2] * v.z());
+    }
+    inline vec3 operator/(const vec3& v) const
+    {
+        return vec3(e[0] / v.x(), e[1] / v.y(), e[2] / v.z());
+    }
+    inline vec3 operator+(const float s) const { return vec3(e[0] + s, e[1] + s, e[2] + s); }
+    inline vec3 operator-(const float s) const { return vec3(e[0] - s, e[1] - s, e[2] - s); }
+    inline vec3 operator*(const float s) const { return vec3(e[0] * s, e[1] * s, e[2] * s); }
+    inline vec3 operator/(const float s) const { return vec3(e[0] / s, e[1] / s, e[2] / s); }
 
     inline vec3& operator+=(const vec3& v)
     {
-        x += v.x;
-        y += v.y;
-        z += v.z;
+        e[0] += v.x();
+        e[1] += v.y();
+        e[2] += v.z();
         return *this;
     }
     inline vec3& operator-=(const vec3& v)
     {
-        x -= v.x;
-        y -= v.y;
-        z -= v.z;
+        e[0] -= v.x();
+        e[1] -= v.y();
+        e[2] -= v.z();
         return *this;
     }
     inline vec3& operator*=(const vec3& v)
     {
-        x *= v.x;
-        y *= v.y;
-        z *= v.z;
+        e[0] *= v.x();
+        e[1] *= v.y();
+        e[2] *= v.z();
         return *this;
     }
     inline vec3& operator/=(const vec3& v)
     {
-        x /= v.x;
-        y /= v.y;
-        z /= v.z;
+        e[0] /= v.x();
+        e[1] /= v.y();
+        e[2] /= v.z();
         return *this;
     }
     inline vec3& operator*=(const float& s)
     {
-        x *= s;
-        y *= s;
-        z *= s;
+        e[0] *= s;
+        e[1] *= s;
+        e[2] *= s;
         return *this;
     }
     inline vec3& operator/=(const float& s)
     {
         float t = 1.0f / s;
-        x *= t;
-        y *= t;
-        z *= t;
+        e[0] *= t;
+        e[1] *= t;
+        e[2] *= t;
         return *this;
     }
 
@@ -74,26 +90,26 @@ class vec3
 
     friend inline std::istream& operator>>(std::istream& is, vec3& v)
     {
-        return is >> v.x >> v.y >> v.z;
+        return is >> v.e[0] >> v.e[1] >> v.e[2];
     }
     friend inline std::ostream& operator>>(std::ostream& os, vec3& v)
     {
-        return os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+        return os << "(" << v.x() << ", " << v.y() << ", " << v.z() << ")";
     }
 
-    inline float length() const { return sqrtf(x * x + y * y + z * z); }
-    inline float squaredLength() const { return x * x + y * y + z * z; }
+    inline float length() const { return sqrtf(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]); }
+    inline float squaredLength() const { return e[0] * e[0] + e[1] * e[1] + e[2] * e[2]; }
     inline vec3 normalized() const
     {
         float k = 1.0f / length();
-        return vec3(x * k, y * k, z * k);
+        return vec3(e[0] * k, e[1] * k, e[2] * k);
     }
     inline void normalize()
     {
         float k = 1.0f / length();
-        x *= k;
-        y *= k;
-        z *= k;
+        e[0] *= k;
+        e[1] *= k;
+        e[2] *= k;
     }
 
     static float angle(const vec3& from, const vec3& to)
@@ -102,16 +118,17 @@ class vec3
     }
     static vec3 cross(const vec3& v1, const vec3& v2)
     {
-        return vec3(((v1.y * v2.z) - (v1.z * v2.y)), ((v1.z * v2.x) - (v1.x * v2.z)),
-                    ((v1.x * v2.y) - (v1.y * v2.x)));
+        return vec3(((v1.y() * v2.z()) - (v1.z() * v2.y())),
+                    ((v1.z() * v2.x()) - (v1.x() * v2.z())),
+                    ((v1.x() * v2.y()) - (v1.y() * v2.x())));
     }
     static float distance(const vec3& v1, const vec3& v2) { return (v1 - v2).length(); }
     static float dot(const vec3& v1, const vec3& v2)
     {
-        return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+        return v1.x() * v2.x() + v1.y() * v2.y() + v1.z() * v2.z();
     }
 
-    float x, y, z;
+    float e[3];
 };
 
 class ray

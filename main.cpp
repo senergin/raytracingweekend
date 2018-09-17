@@ -15,8 +15,8 @@
 vec3 backgroundColor(const ray& r)
 {
     vec3 unit = r.direction;
-    float t1 = 0.5f - (0.5f * unit.y);
-    float t2 = 0.5f + (0.5f * unit.y);
+    float t1 = 0.5f - (0.5f * unit.y());
+    float t2 = 0.5f + (0.5f * unit.y());
     return t1 * vec3(0.5f, 1.f, 1.f) + t2 * vec3(0.5f, 0.7f, 1.f);
 }
 vec3 color(const ray& r, const hitable* hitable, const float minDistance, const float maxDistance,
@@ -126,9 +126,9 @@ void raycastWorld(const raycastWorldParameters& params, const hitable* world, co
             col /= params.sampling;
 
             // Gamma correction
-            int r = sqrtf(col.x) * 255.99f;
-            int g = sqrtf(col.y) * 255.99f;
-            int b = sqrtf(col.z) * 255.99f;
+            int r = sqrtf(col.x()) * 255.99f;
+            int g = sqrtf(col.y()) * 255.99f;
+            int b = sqrtf(col.z()) * 255.99f;
 
             int index = ((j * params.width) + i) * params.channels;
 
