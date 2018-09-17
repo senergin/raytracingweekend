@@ -15,6 +15,9 @@ class vec2
     inline float x() const { return e[0]; }
     inline float y() const { return e[1]; }
 
+    inline float operator[](int i) const { return e[i]; }
+    inline float& operator[](int i) { return e[i]; };
+
     inline const vec2& operator+() const { return *this; }
     inline const vec2 operator-() const { return vec2(-e[0], -e[1]); }
 
@@ -69,10 +72,7 @@ class vec2
     friend inline vec2 operator-(const float s, const vec2& v) { return v - s; }
     friend inline vec2 operator*(const float s, const vec2& v) { return v * s; }
 
-    friend inline std::istream& operator>>(std::istream& is, vec2& v)
-    {
-        return is >> v.e[0] >> v.e[1];
-    }
+    friend inline std::istream& operator>>(std::istream& is, vec2& v) { return is >> v[0] >> v[1]; }
     friend inline std::ostream& operator>>(std::ostream& os, vec2& v)
     {
         return os << "(" << v.x() << ", " << v.y() << ")";

@@ -19,6 +19,9 @@ class vec3
     inline const vec3& operator+() const { return *this; }
     inline const vec3 operator-() const { return vec3(-e[0], -e[1], -e[2]); }
 
+    inline float operator[](int i) const { return e[i]; }
+    inline float& operator[](int i) { return e[i]; };
+
     inline vec3 operator+(const vec3& v) const
     {
         return vec3(e[0] + v.x(), e[1] + v.y(), e[2] + v.z());
@@ -90,7 +93,7 @@ class vec3
 
     friend inline std::istream& operator>>(std::istream& is, vec3& v)
     {
-        return is >> v.e[0] >> v.e[1] >> v.e[2];
+        return is >> v[0] >> v[1] >> v[2];
     }
     friend inline std::ostream& operator>>(std::ostream& os, vec3& v)
     {
