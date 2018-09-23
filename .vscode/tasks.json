@@ -18,7 +18,8 @@
         "type": "shell",
         "command": "C:/Program Files/IrfanView/i_view64.exe",
         "args": [
-            "out.png"
+            "test.png"
+            // "out.png"
         ]
     }]
 }
